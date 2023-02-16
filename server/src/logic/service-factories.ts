@@ -1,5 +1,5 @@
 import { SyncRunRepository } from '../data/SyncRunRepository';
-import { SyncService } from './SyncService';
+import { SyncRunService } from './SyncRunService';
 import knexInit from 'knex';
 import { TransactionManager } from '../data/TransactionManager';
 
@@ -15,6 +15,6 @@ const knex = knexInit({
   },
 });
 
-export function createSyncService() {
-  return new SyncService(new SyncRunRepository(), new TransactionManager(knex));
+export function createSyncRunService() {
+  return new SyncRunService(new SyncRunRepository(), new TransactionManager(knex));
 }

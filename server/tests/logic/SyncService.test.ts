@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 import { SyncRun } from '../../src/data/domain.types';
 import { ISyncRunRepository } from '../../src/data/repository.types';
-import { SyncService } from '../../src/logic/SyncService';
+import { SyncRunService } from '../../src/logic/SyncRunService';
 import { MockTransactionManager } from './helpers';
 
 class CreateCallMockSyncRunRepository implements ISyncRunRepository {
@@ -17,7 +17,9 @@ class CreateCallMockSyncRunRepository implements ISyncRunRepository {
       ...data,
     };
   }
-  async create(config: { trx: Knex.Transaction<any, any[]> }): Promise<SyncRun> {
+  async create(config: {
+    trx: Knex.Transaction<any, any[]>;
+  }): Promise<SyncRun> {
     return {
       id: 1,
       started_at: this.started_at,
@@ -33,7 +35,9 @@ class CreateCallMockSyncRunRepository implements ISyncRunRepository {
 }
 
 class GetLatestCallMockSyncRunRepository extends CreateCallMockSyncRunRepository {
-  override async getLatest(config: { trx: Knex.Transaction<any, any[]>; }): Promise<SyncRun | null> {
+  override async getLatest(config: {
+    trx: Knex.Transaction<any, any[]>;
+  }): Promise<SyncRun | null> {
     return {
       id: 2,
       started_at: this.started_at,
@@ -43,46 +47,20 @@ class GetLatestCallMockSyncRunRepository extends CreateCallMockSyncRunRepository
   }
 }
 
-describe('SyncService', () => {
-  it('return correct value from jestTest', async () => {
-    const s = new SyncService(
-      new CreateCallMockSyncRunRepository(),
-      new MockTransactionManager()
-    );
-    const r = await s.jestTest();
-    expect(r).toBe(true);
-  });
-
+describe('SyncRunService', () => {
   it('creates new run when none exist', async () => {
     const mockRepo = new CreateCallMockSyncRunRepository();
-    const s = new SyncService(
-      mockRepo,
-      new MockTransactionManager()
-    );
-    const r = await s.performSynchronization();
-    expect(r.id).toBe(1);
-    expect(r.type).toBe('in-progress');
+    const s = new SyncRunService(mockRepo, new MockTransactionManager());
+    const r = await s.createIfFinished();
+    expect(r.syncRun.id).toBe(1);
+    expect(r.syncRun.type).toBe('in-progress');
   });
 
   it('returns latest when it exists', async () => {
     const mockRepo = new GetLatestCallMockSyncRunRepository();
-    const s = new SyncService(
-      mockRepo,
-      new MockTransactionManager()
-    );
-    const r = await s.performSynchronization();
-    expect(r.id).toBe(2);
-    expect(r.type).toBe('in-progress');
-  });
-
-  it('returns latest when it exists', async () => {
-    const mockRepo = new GetLatestCallMockSyncRunRepository();
-    const s = new SyncService(
-      mockRepo,
-      new MockTransactionManager()
-    );
-    const r = await s.performSynchronization();
-    expect(r.id).toBe(2);
-    expect(r.type).toBe('in-progress');
+    const s = new SyncRunService(mockRepo, new MockTransactionManager());
+    const r = await s.createIfFinished();
+    expect(r.syncRun.id).toBe(2);
+    expect(r.syncRun.type).toBe('in-progress');
   });
 });

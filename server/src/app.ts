@@ -1,6 +1,6 @@
 import express, { NextFunction, Response } from 'express';
 import dotenv from 'dotenv';
-import { createSyncService } from './logic/service-factories';
+import { createSyncRunService } from './logic/service-factories';
 dotenv.config();
 
 const app = express();
@@ -17,9 +17,10 @@ async function tryOrNext<R>(func: () => Promise<R>, next: NextFunction) {
 
 app.post('/api/sync', async (req, res, next) => {
   await tryOrNext(async () => {
-    const syncService = createSyncService();
-    const syncResult = await syncService.performSynchronization();
-    res.json(syncResult);
+    const syncService = createSyncRunService();
+    const syncResult = await syncService.createIfFinished();
+    // call the transfer service
+    res.json(syncResult.syncRun);
   }, next);
 });
 
