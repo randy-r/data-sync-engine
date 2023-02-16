@@ -29,6 +29,7 @@ export class SyncRunService {
         const now = new Date();
 
         if (now.getTime() - finished.getTime() > SYNC_ALLOWED_INTERVAL_MS) {
+          isNew = true;
           r = await this.syncRunRepo.create({ trx });
         }
       }

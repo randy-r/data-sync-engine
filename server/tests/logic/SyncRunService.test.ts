@@ -54,6 +54,7 @@ describe('SyncRunService', () => {
     const r = await s.createIfFinished();
     expect(r.syncRun.id).toBe(1);
     expect(r.syncRun.type).toBe('in-progress');
+    expect(r.isNew).toBe(true);
   });
 
   it('returns latest when it exists', async () => {
@@ -62,5 +63,6 @@ describe('SyncRunService', () => {
     const r = await s.createIfFinished();
     expect(r.syncRun.id).toBe(2);
     expect(r.syncRun.type).toBe('in-progress');
+    expect(r.isNew).toBe(false);
   });
 });

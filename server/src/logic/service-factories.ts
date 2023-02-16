@@ -35,7 +35,11 @@ export function createTransferService() {
     new SyncRunRepository(),
     new TransactionManager(knex),
     new StripeRepository(),
-    new UserAccountsRepository()
+    new UserAccountsRepository(),
+    {
+      stripeChunkService:
+        Number.parseInt(process.env.STRIPE_CHUNK_SIZE, 10) ?? 10,
+    }
   );
 }
 

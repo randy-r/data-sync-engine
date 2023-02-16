@@ -1,5 +1,6 @@
 import { SyncRun, UserAccountMap } from './domain.types';
 import type { Knex } from 'knex';
+import Stripe from 'stripe';
 
 export interface ISyncRunRepository {
   updateType(
@@ -11,7 +12,10 @@ export interface ISyncRunRepository {
 }
 
 export interface IStripeRepository {
-  getCustomers(access_token: string): Promise<any>;
+  getCustomers(
+    access_token: string,
+    params?: { limit?: number; starting_after?: string }
+  ): Promise<{ data: Stripe.Customer[]; has_more: boolean }>;
 }
 
 export interface IUserAccountsRepository {

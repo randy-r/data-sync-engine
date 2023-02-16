@@ -6,17 +6,23 @@ import {
 } from '../data/repository.types';
 import { ITransactionManager } from '../data/TransactionManager';
 
+export type TransferServiceConfig = {
+  stripeChunkService: number;
+};
+
 export class TransferService {
   private syncRunRepo: ISyncRunRepository;
   private tm: ITransactionManager;
   private stripeRepo: IStripeRepository;
   private userAccountsRepo: IUserAccountsRepository;
+  private config: TransferServiceConfig;
 
   constructor(
     syncRunRepo: ISyncRunRepository,
     transactionManager: ITransactionManager,
     stripeRepo: IStripeRepository,
-    userAccountsRepo: IUserAccountsRepository
+    userAccountsRepo: IUserAccountsRepository,
+    config: TransferServiceConfig
   ) {
     this.syncRunRepo = syncRunRepo;
     this.stripeRepo = stripeRepo;
@@ -33,10 +39,19 @@ export class TransferService {
         for (const [account_id, value] of userAccounts.entries()) {
           switch (value.service) {
             case 'stripe': {
-              const stripeCustomers = await this.stripeRepo.getCustomers(
-                value.access_token
-              );
-              console.log(stripeCustomers);
+              let starting_after: string | undefined;
+              let hasMore = true;
+              while (hasMore) {
+                // Note: stripe's auto pagination is cool but harder to mock, going with on a more vanilla route
+                const customersResponse = await this.stripeRepo.getCustomers(
+                  value.access_token,
+                  { limit: this.config.stripeChunkService, starting_after }
+                );
+                const { data, has_more } = customersResponse;
+                console.log(data);
+                hasMore = has_more;
+                starting_after = data.at(-1).id;
+              }
               break;
             }
 
