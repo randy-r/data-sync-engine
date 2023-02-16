@@ -1,7 +1,6 @@
 import { SyncRun } from '../data/domain.types';
 import { ISyncRunRepository } from '../data/repository.types';
 import { ITransactionManager } from '../data/TransactionManager';
-import { delay } from '../utils/misc';
 
 // const SYNC_ALLOWED_INTERVAL_MS = 60 * 60 * 1000;
 const SYNC_ALLOWED_INTERVAL_MS = 5_000;
@@ -38,20 +37,4 @@ export class SyncRunService {
 
     return { isNew, syncRun };
   }
-
-  // async transferData(syncRun: SyncRun): Promise<void> {
-  //   try {
-  //     this.tm.runAsTransaction(async (trx) => {
-  //       // TODO logic
-  //       delay(5_000);
-
-  //       const updatedRun: SyncRun = await this.syncRunRepo.updateType(
-  //         { id: syncRun.id, type: 'done' },
-  //         { trx }
-  //       );
-  //     });
-  //   } catch (e) {
-  //     // TODO maybe save in db
-  //   }
-  // }
 }
