@@ -12,6 +12,7 @@ import { TransferService } from './TransferService';
 import { SyncTriggerService } from './SyncTriggerService';
 import { StripeRepository } from '../data/StripeRepository';
 import { UserAccountsRepository } from '../data/UserAccountsRepository';
+import { CustomersDbRepository } from '../data/CustomersDbRepository';
 dotenv.config();
 
 const knex = knexInit({
@@ -36,6 +37,7 @@ export function createTransferService() {
     new TransactionManager(knex),
     new StripeRepository(),
     new UserAccountsRepository(),
+    new CustomersDbRepository(),
     {
       stripeChunkService:
         Number.parseInt(process.env.STRIPE_CHUNK_SIZE, 10) ?? 10,

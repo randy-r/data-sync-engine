@@ -19,6 +19,8 @@ export type SyncRunInProgress = {
   finished_at: null | string;
 };
 
+export type SyncRun = SyncRunDone | SyncRunInProgress | SyncRunDoneWithErrors;
+
 export type UserAccountValue = {
   service: 'stripe' | 'hubspot';
   access_token: string;
@@ -26,4 +28,12 @@ export type UserAccountValue = {
 
 export type UserAccountMap = Map<string, UserAccountValue>;
 
-export type SyncRun = SyncRunDone | SyncRunInProgress | SyncRunDoneWithErrors;
+export type StripeCustomer = {
+  id: string;
+  name?: string;
+  description?: string;
+  email?: string;
+  account_id: string;
+  created_at: string;
+  sync_run_id: number;
+};
