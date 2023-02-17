@@ -28,7 +28,16 @@ export type UserAccountValue = {
 
 export type UserAccountMap = Map<string, UserAccountValue>;
 
+// Projection of StripeCustomer
 export type StripeCustomer = {
+  id: string;
+  name?: string;
+  description?: string;
+  email?: string;
+  created: number;
+};
+
+export type StripeDbCustomer = {
   id: string;
   name?: string;
   description?: string;

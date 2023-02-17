@@ -1,8 +1,13 @@
 import { Knex } from 'knex';
 import { SyncRun } from './domain.types';
-import { ISyncRunRepository } from './repository.types';
+import {
+  ISyncRunRepository,
+  ISyncRunUpdateRepository,
+} from './repository.types';
 
-export class SyncRunRepository implements ISyncRunRepository {
+export class SyncRunRepository
+  implements ISyncRunRepository, ISyncRunUpdateRepository
+{
   async updateType(
     data: { id: number; type: 'done' | 'done-with-errors' },
     { trx }: { trx: Knex.Transaction<any, any[]> }

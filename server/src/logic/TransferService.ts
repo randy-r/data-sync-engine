@@ -1,19 +1,23 @@
-import { StripeCustomer, SyncRun, UserAccountMap } from '../data/domain.types';
+import {
+  StripeDbCustomer,
+  SyncRun,
+  UserAccountMap,
+} from '../data/domain.types';
 import {
   ICustomersDbRepository,
   IStripeRepository,
-  ISyncRunRepository,
+  ISyncRunUpdateRepository,
   IUserAccountsRepository,
 } from '../data/repository.types';
 import { ITransactionManager } from '../data/TransactionManager';
 import { mapStripeResponseToDomainCustomer } from './mappers';
 
 export type TransferServiceConfig = {
-  stripeChunkService: number;
+  stripeChunkSize: number;
 };
 
 export class TransferService {
-  private syncRunRepo: ISyncRunRepository;
+  private syncRunRepo: ISyncRunUpdateRepository;
   private tm: ITransactionManager;
   private stripeRepo: IStripeRepository;
   private userAccountsRepo: IUserAccountsRepository;
@@ -21,7 +25,7 @@ export class TransferService {
   private customersDbRepo: ICustomersDbRepository;
 
   constructor(
-    syncRunRepo: ISyncRunRepository,
+    syncRunRepo: ISyncRunUpdateRepository,
     transactionManager: ITransactionManager,
     stripeRepo: IStripeRepository,
     userAccountsRepo: IUserAccountsRepository,
@@ -37,8 +41,7 @@ export class TransferService {
   }
   async transfer(syncRun: SyncRun): Promise<void> {
     try {
-      const userAccounts: UserAccountMap =
-        await this.userAccountsRepo.getAccounts();
+      const userAccounts = await this.userAccountsRepo.getAccounts();
       const errors: any[] = [];
       // TODO possibility to send multiple requests to 3rd parties at once
       for (const [account_id, value] of userAccounts.entries()) {
@@ -60,11 +63,11 @@ export class TransferService {
                   // Note: stripe's auto pagination is cool but harder to mock, going with on a more vanilla route
                   const customersResponse = await this.stripeRepo.getCustomers(
                     value.access_token,
-                    { limit: this.config.stripeChunkService, starting_after }
+                    { limit: this.config.stripeChunkSize, starting_after }
                   );
 
                   const { data, has_more } = customersResponse;
-                  const toInsert: StripeCustomer[] = data.map((c) =>
+                  const toInsert: StripeDbCustomer[] = data.map((c) =>
                     mapStripeResponseToDomainCustomer(c, account_id, syncRun.id)
                   );
                   await this.customersDbRepo.insertCustomersForAccount(
@@ -84,6 +87,7 @@ export class TransferService {
           } // switch
         } catch (e) {
           errors.push(e);
+          // TODO opportunity to save this in the db and perform retries after the main run
           console.error(
             `Error when performing synchronization for account_id: "${account_id}", service: "${value.service}", continuing to next account..."`,
             e.name,

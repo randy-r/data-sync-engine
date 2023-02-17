@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { StripeCustomer } from './domain.types';
+import { StripeDbCustomer } from './domain.types';
 import { ICustomersDbRepository } from './repository.types';
 
 export class CustomersDbRepository implements ICustomersDbRepository {
@@ -22,9 +22,9 @@ export class CustomersDbRepository implements ICustomersDbRepository {
   async insertCustomersForAccount(
     account_id: string,
     id: number,
-    toInsert: StripeCustomer[],
+    toInsert: StripeDbCustomer[],
     { trx }: { trx: Knex.Transaction<any, any[]> }
-  ): Promise<StripeCustomer[]> {
+  ): Promise<StripeDbCustomer[]> {
     const chunkSize = toInsert.length; // Send as many as there are in one go
     const result = await trx
       .batchInsert('public.stripe-customers', toInsert, chunkSize)

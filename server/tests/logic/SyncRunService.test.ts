@@ -1,28 +1,19 @@
+import {expect, jest, test, describe, it} from '@jest/globals';
 import { Knex } from 'knex';
 import { SyncRun } from '../../src/data/domain.types';
 import { ISyncRunRepository } from '../../src/data/repository.types';
 import { SyncRunService } from '../../src/logic/SyncRunService';
 import { MockTransactionManager } from './helpers';
 
+const TIMESTAMP = new Date().toISOString();
+
 class CreateCallMockSyncRunRepository implements ISyncRunRepository {
-  public started_at = `2023-02-14T13:00:00.000Z`;
-  public finished_at = `2023-02-14T13:00:00.000Z`;
-  async updateType(
-    data: { id: number; type: SyncRun['type'] },
-    options: { trx: Knex.Transaction<any, any[]> }
-  ): Promise<SyncRun> {
-    return {
-      started_at: this.started_at,
-      finished_at: this.finished_at,
-      ...data,
-    };
-  }
   async create(config: {
     trx: Knex.Transaction<any, any[]>;
   }): Promise<SyncRun> {
     return {
       id: 1,
-      started_at: this.started_at,
+      started_at: TIMESTAMP,
       finished_at: null,
       type: 'in-progress',
     };
@@ -40,7 +31,7 @@ class GetLatestCallMockSyncRunRepository extends CreateCallMockSyncRunRepository
   }): Promise<SyncRun | null> {
     return {
       id: 2,
-      started_at: this.started_at,
+      started_at: TIMESTAMP,
       finished_at: null,
       type: 'in-progress',
     };

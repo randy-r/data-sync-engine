@@ -39,7 +39,7 @@ export function createTransferService() {
     new UserAccountsRepository(),
     new CustomersDbRepository(),
     {
-      stripeChunkService:
+      stripeChunkSize:
         Number.parseInt(process.env.STRIPE_CHUNK_SIZE, 10) ?? 10,
     }
   );

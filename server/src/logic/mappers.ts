@@ -1,11 +1,10 @@
-import Stripe from 'stripe';
-import { StripeCustomer } from '../data/domain.types';
+import { StripeCustomer, StripeDbCustomer } from '../data/domain.types';
 
 export function mapStripeResponseToDomainCustomer(
-  c: Stripe.Customer,
+  c: StripeCustomer,
   account_id: string,
   sync_run_id: number
-): StripeCustomer {
+): StripeDbCustomer {
   return {
     id: c.id,
     name: c.name,
