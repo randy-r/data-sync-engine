@@ -2,12 +2,13 @@ import express, { NextFunction, Response } from 'express';
 import dotenv from 'dotenv';
 import {
   createCleanUpService,
+  createClientsService,
   createTriggerService,
 } from './logic/service-factories';
 dotenv.config();
 
 const app = express();
-const port = 3007;
+const port = process.env.PORT ?? 3000;
 
 const cleanUpService = createCleanUpService();
 const cleanUpPromise = cleanUpService.cleanUpHangingSyncRuns();
@@ -29,6 +30,14 @@ app.post('/api/sync', async (req, res, next) => {
     const s = createTriggerService();
     const syncRun = await s.triggerSync();
     res.json(syncRun);
+  }, next);
+});
+
+app.get('/api/clients', async (req, res, next) => {
+  await tryOrNext(async () => {
+    const s = createClientsService();
+    const clients = await s.getClients();
+    res.json(clients);
   }, next);
 });
 

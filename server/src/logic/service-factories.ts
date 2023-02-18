@@ -19,6 +19,7 @@ import { AppConfig } from './service.types';
 import { ContactsDbRepository } from '../data/ContactsDbRepository';
 import { CleanUpService } from './CleanUpService';
 import { Throttler } from './Throttler';
+import { ClientsService } from './ClientsService';
 dotenv.config();
 
 const knex = knexInit({
@@ -70,4 +71,8 @@ export function createTriggerService() {
 
 export function createCleanUpService() {
   return new CleanUpService(tm);
+}
+
+export function createClientsService() {
+  return new ClientsService(tm);
 }
