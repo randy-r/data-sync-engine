@@ -1,4 +1,4 @@
-import {expect, jest, test, describe, it} from '@jest/globals';
+import { expect, jest, test, describe, it } from '@jest/globals';
 import { Knex } from 'knex';
 import { SyncRun } from '../../src/data/domain.types';
 import { ISyncRunRepository } from '../../src/data/repository.types';
@@ -41,7 +41,9 @@ class GetLatestCallMockSyncRunRepository extends CreateCallMockSyncRunRepository
 describe('SyncRunService', () => {
   it('creates new run when none exist', async () => {
     const mockRepo = new CreateCallMockSyncRunRepository();
-    const s = new SyncRunService(mockRepo, new MockTransactionManager());
+    const s = new SyncRunService(mockRepo, new MockTransactionManager(), {
+      syncAllowedIntervalMs: 1000,
+    });
     const r = await s.createIfFinished();
     expect(r.syncRun.id).toBe(1);
     expect(r.syncRun.type).toBe('in-progress');
@@ -50,7 +52,9 @@ describe('SyncRunService', () => {
 
   it('returns latest when it exists', async () => {
     const mockRepo = new GetLatestCallMockSyncRunRepository();
-    const s = new SyncRunService(mockRepo, new MockTransactionManager());
+    const s = new SyncRunService(mockRepo, new MockTransactionManager(), {
+      syncAllowedIntervalMs: 1000,
+    });
     const r = await s.createIfFinished();
     expect(r.syncRun.id).toBe(2);
     expect(r.syncRun.type).toBe('in-progress');

@@ -15,6 +15,7 @@ export class MockTransactionManager implements ITransactionManager {
 
 const mockUserAccounts = new Map<string, UserAccountValue>([
   ['test-1', { service: 'stripe', access_token: 'at-1' }],
+  ['test-2', { service: 'hubspot', access_token: 'at-2' }],
   ['test-3', { service: 'stripe', access_token: 'at-3' }],
 ]);
 

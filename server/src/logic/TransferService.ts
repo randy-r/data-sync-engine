@@ -1,44 +1,30 @@
+import { SyncRun } from '../data/domain.types';
 import {
-  StripeDbCustomer,
-  SyncRun,
-  UserAccountMap,
-} from '../data/domain.types';
-import {
-  ICustomersDbRepository,
-  IStripeRepository,
   ISyncRunUpdateRepository,
   IUserAccountsRepository,
 } from '../data/repository.types';
 import { ITransactionManager } from '../data/TransactionManager';
-import { mapStripeResponseToDomainCustomer } from './mappers';
-import { AppConfig, IAccountTransferService } from './service.types';
+import { IAccountTransferService } from './service.types';
 
 export class TransferService {
   private syncRunRepo: ISyncRunUpdateRepository;
   private tm: ITransactionManager;
   private userAccountsRepo: IUserAccountsRepository;
-  private config: AppConfig;
 
-  private customersDbRepo: ICustomersDbRepository;
-  private stripeRepo: IStripeRepository;
-
+  private stripeTransferService: IAccountTransferService;
   private hubspotTransferService: IAccountTransferService;
 
   constructor(
     syncRunRepo: ISyncRunUpdateRepository,
     transactionManager: ITransactionManager,
-    stripeRepo: IStripeRepository,
     userAccountsRepo: IUserAccountsRepository,
-    customersDbRepo: ICustomersDbRepository,
-    hubspotTransferService: IAccountTransferService,
-    config: AppConfig
+    stripeTransferService: IAccountTransferService,
+    hubspotTransferService: IAccountTransferService
   ) {
     this.syncRunRepo = syncRunRepo;
-    this.stripeRepo = stripeRepo;
     this.tm = transactionManager;
     this.userAccountsRepo = userAccountsRepo;
-    this.config = config;
-    this.customersDbRepo = customersDbRepo;
+    this.stripeTransferService = stripeTransferService;
     this.hubspotTransferService = hubspotTransferService;
   }
   async transfer(syncRun: SyncRun): Promise<void> {
@@ -50,38 +36,11 @@ export class TransferService {
         try {
           switch (value.service) {
             case 'stripe': {
-              // each account sync is a transaction, continue on error, the old entries will be the shown by having a different sync run id
-              await this.tm.runAsTransaction(async (trx) => {
-                let starting_after: string | undefined;
-                let hasMore = true;
-                await this.customersDbRepo.clearCustomersForAccount(
-                  account_id,
-                  {
-                    trx,
-                  }
-                );
-
-                while (hasMore) {
-                  // Note: stripe's auto pagination is cool but harder to mock, going with on a more vanilla route
-                  const customersResponse = await this.stripeRepo.getCustomers(
-                    value.access_token,
-                    { limit: this.config.stripeChunkSize, starting_after }
-                  );
-
-                  const { data, has_more } = customersResponse;
-                  const toInsert: StripeDbCustomer[] = data.map((c) =>
-                    mapStripeResponseToDomainCustomer(c, account_id, syncRun.id)
-                  );
-                  await this.customersDbRepo.insertCustomersForAccount(
-                    account_id,
-                    syncRun.id,
-                    toInsert,
-                    { trx }
-                  );
-                  hasMore = has_more;
-                  starting_after = data.at(-1).id;
-                }
-              });
+              await this.stripeTransferService.transfer(
+                account_id,
+                value.access_token,
+                syncRun.id
+              );
               break;
             }
             case 'hubspot': {

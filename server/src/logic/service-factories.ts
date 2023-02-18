@@ -20,6 +20,7 @@ import { ContactsDbRepository } from '../data/ContactsDbRepository';
 import { CleanUpService } from './CleanUpService';
 import { Throttler } from './Throttler';
 import { ClientsService } from './ClientsService';
+import { StripeTransferService } from './StripeTransferService';
 dotenv.config();
 
 const knex = knexInit({
@@ -52,17 +53,20 @@ export function createTransferService() {
   return new TransferService(
     new SyncRunRepository(),
     tm,
-    new StripeRepository(),
     new UserAccountsRepository(),
-    new CustomersDbRepository(),
+    new StripeTransferService(
+      tm,
+      new StripeRepository(),
+      new CustomersDbRepository(),
+      appConfig
+    ),
     new HubspotTransferService(
       new HubspotRepository(),
       new ContactsDbRepository(),
       tm,
       hubspotThrottler,
       appConfig
-    ),
-    appConfig
+    )
   );
 }
 

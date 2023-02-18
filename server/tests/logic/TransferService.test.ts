@@ -1,7 +1,7 @@
 import { expect, jest, test, describe, it } from '@jest/globals';
 import { Knex } from 'knex';
-import Stripe from 'stripe';
 import {
+  HubspotDbContact,
   StripeCustomer,
   StripeDbCustomer,
   SyncRun,
@@ -11,12 +11,17 @@ import {
   IStripeRepository,
   ISyncRunUpdateRepository,
   ICustomersDbRepository,
+  IContactsDbRepository,
+  IHubspotRepository,
+  GetHubspotContactsResponse,
 } from '../../src/data/repository.types';
-import {
-  TransferService,
-  TransferServiceConfig,
-} from '../../src/logic/TransferService';
+import { TransferService } from '../../src/logic/TransferService';
+import { StripeTransferService } from '../../src/logic/StripeTransferService';
+import { HubspotTransferService } from '../../src/logic/HubspotTransferService';
+
 import { MockTransactionManager, MockUserAccountRepo } from './helpers';
+import { Throttler } from '../../src/logic/Throttler';
+import { AppConfig } from '../../src/logic/service.types';
 
 const CURRENT_SYNC_RUN: SyncRunInProgress = {
   type: 'in-progress',
@@ -78,32 +83,105 @@ export class MockCustomersDbRepository implements ICustomersDbRepository {
   }
 }
 
-const mockConfig: TransferServiceConfig = {
+export class MockHubspotRepository implements IHubspotRepository {
+  async getContacts(
+    access_token: string,
+    params?:
+      | { limit?: number | undefined; starting_after?: string | undefined }
+      | undefined
+  ): Promise<GetHubspotContactsResponse> {
+    return {
+      results: [
+        {
+          id: `id__${access_token}`,
+          properties: {
+            createdate: '2024-02-17T13:09:55.000Z',
+            email: 'email',
+            firstname: 'firstname',
+            lastname: 'lastname',
+          },
+        },
+      ],
+      rateLimit: {
+        intervalMs: 10_000,
+        max: 100,
+        remaining: 99,
+      },
+    };
+  }
+}
+
+class MockContactsDbRepo implements IContactsDbRepository {
+  async clearContactsForAccount(
+    account_id: string,
+    arg1: { trx: Knex.Transaction<any, any[]> }
+  ): Promise<{ count: number }> {
+    return { count: 10 };
+  }
+  async insertContactsForAccount(
+    account_id: string,
+    sync_run_id: number,
+    toInsert: HubspotDbContact[],
+    arg3: { trx: Knex.Transaction<any, any[]> }
+  ): Promise<HubspotDbContact[]> {
+    return toInsert;
+  }
+}
+
+const mockTm = new MockTransactionManager();
+
+const config: AppConfig = {
+  hubspotChunkSize: 1,
   stripeChunkSize: 1,
+  syncAllowedIntervalMs: 1000,
 };
 
 describe('TransferService', () => {
-  it('transfers all entries from 3rd party to db', async () => {
-    // arrange
-    const customersDbRepo = new MockCustomersDbRepository();
-    const mockedCustomerClear = jest.spyOn(customersDbRepo, 'clearCustomersForAccount');
-    const mockedCustomerInsert = jest.spyOn(
-      customersDbRepo,
-      'insertCustomersForAccount'
-    );
-    const s = new TransferService(
-      new MockSyncRunUpdateRepository(),
-      new MockTransactionManager(),
-      new MockStripeRepo(),
-      new MockUserAccountRepo(),
-      customersDbRepo,
-      mockConfig
-    );
+  // arrange
+  const customersDbRepo = new MockCustomersDbRepository();
+  const mockedCustomerClear = jest.spyOn(
+    customersDbRepo,
+    'clearCustomersForAccount'
+  );
+  const mockedCustomerInsert = jest.spyOn(
+    customersDbRepo,
+    'insertCustomersForAccount'
+  );
+  const contactsDbRepo = new MockContactsDbRepo();
+  const mockedContactClear = jest.spyOn(
+    contactsDbRepo,
+    'clearContactsForAccount'
+  );
+  const mockedContactInsert = jest.spyOn(
+    contactsDbRepo,
+    'insertContactsForAccount'
+  );
 
+  const s = new TransferService(
+    new MockSyncRunUpdateRepository(),
+    new MockTransactionManager(),
+    new MockUserAccountRepo(),
+    new StripeTransferService(
+      mockTm,
+      new MockStripeRepo(),
+      customersDbRepo,
+      config
+    ),
+    new HubspotTransferService(
+      new MockHubspotRepository(),
+      contactsDbRepo,
+      mockTm,
+      new Throttler(),
+      config
+    )
+  );
+
+  it('transfers all entries from 3rd parties to db', async () => {
     // act
     await s.transfer(CURRENT_SYNC_RUN);
-
     // assert
+
+    // Stripe part
     expect(mockedCustomerClear).toBeCalledTimes(2);
     const insertCustomersDbCalls = mockedCustomerInsert.mock.calls;
     expect(insertCustomersDbCalls.length).toBe(2);
@@ -127,6 +205,23 @@ describe('TransferService', () => {
         description: 'desc',
         email: 'email',
         name: 'name',
+        sync_run_id: CURRENT_SYNC_RUN.id,
+      },
+    ]);
+
+    // Hubspot part
+    expect(mockedContactClear).toBeCalledTimes(1);
+    const insertContactDbCalls = mockedContactInsert.mock.calls;
+    expect(insertContactDbCalls.length).toBe(1);
+    // assert what values are produced and passed forwards to the db
+    expect(insertContactDbCalls[0][2]).toEqual([
+      {
+        id: 'id__at-2',
+        account_id: 'test-2',
+        created_at: '2024-02-17T13:09:55.000Z',
+        email: 'email',
+        first_name: 'firstname',
+        last_name: 'lastname',
         sync_run_id: CURRENT_SYNC_RUN.id,
       },
     ]);

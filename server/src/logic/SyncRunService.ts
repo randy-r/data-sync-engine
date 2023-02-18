@@ -6,11 +6,11 @@ import { AppConfig } from './service.types';
 export class SyncRunService {
   private syncRunRepo: ISyncRunRepository;
   private tm: ITransactionManager;
-  private config: AppConfig;
+  private config: Pick<AppConfig, 'syncAllowedIntervalMs'>;
   constructor(
     syncRunRepo: ISyncRunRepository,
     transactionManager: ITransactionManager,
-    config: AppConfig
+    config: Pick<AppConfig, 'syncAllowedIntervalMs'>
   ) {
     this.syncRunRepo = syncRunRepo;
     this.tm = transactionManager;
