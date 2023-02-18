@@ -1,4 +1,6 @@
+import { buildClientsQuery } from '../data/build-clients-query';
 import { TransactionManager } from '../data/TransactionManager';
+import { validateNonEmptyString } from '../utils/misc';
 
 export class ClientsService {
   private tm: TransactionManager;
@@ -7,41 +9,17 @@ export class ClientsService {
   }
 
   // TODO types, and in general actual SQL statements should be in repositories
-  async getClients() {
+  async getClients(filters?: { emailSearch?: string; account_id: string }) {
+    if (filters?.account_id) {
+      validateNonEmptyString(filters.account_id);
+    }
+    if (filters?.emailSearch) {
+      validateNonEmptyString(filters.emailSearch);
+    }
+
+    const query = buildClientsQuery(filters);
     const result = await this.tm.runAsTransaction<{ rows: any }>((trx) => {
-      return trx.raw(`
-      SELECT
-        u.*,
-        sr.finished_at synced_at
-      FROM
-        (
-          SELECT
-            id,
-            email,
-            name,
-            created_at,
-            sync_run_id,
-            'stripe' AS source
-          FROM
-            public."stripe-customers"
-          UNION
-          ALL
-          SELECT
-            id,
-            email,
-            CASE
-              TRIM(CONCAT("first_name", ' ', "last_name"))
-              WHEN '' THEN NULL
-              ELSE TRIM(CONCAT("first_name", ' ', "last_name"))
-            END AS name,
-            created_at,
-            sync_run_id,
-            'hubspot' AS source
-          FROM
-            public."hubspot-contacts"
-        ) u
-        INNER JOIN public."sync-runs" sr ON sr.id = u.sync_run_id
-      `);
+      return trx.raw(query);
     });
 
     return result.rows;

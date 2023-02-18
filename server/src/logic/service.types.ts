@@ -1,6 +1,7 @@
 export type AppConfig = {
   stripeChunkSize: number;
   hubspotChunkSize: number;
+  syncAllowedIntervalMs: number;
 };
 
 export interface IAccountTransferService {

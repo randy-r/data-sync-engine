@@ -41,6 +41,17 @@ app.get('/api/clients', async (req, res, next) => {
   }, next);
 });
 
+app.get('/api/accounts/:id/clients', async (req, res, next) => {
+  await tryOrNext(async () => {
+    const s = createClientsService();
+    const clients = await s.getClients({
+      account_id: req.params.id,
+      emailSearch: req.query.email as string,
+    });
+    res.json(clients);
+  }, next);
+});
+
 app.listen(port, () => {
   return console.info(`Express is listening at http://localhost:${port}`);
 });

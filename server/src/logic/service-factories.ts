@@ -36,10 +36,14 @@ const tm = new TransactionManager(knex);
 const appConfig: AppConfig = {
   stripeChunkSize: Number.parseInt(process.env.STRIPE_CHUNK_SIZE, 10) ?? 10,
   hubspotChunkSize: Number.parseInt(process.env.HUBSPOT_CHUNK_SIZE, 10) ?? 10,
+  syncAllowedIntervalMs: Number.parseInt(
+    process.env.SYNC_ALLOWED_INTERVAL_MS,
+    10
+  ),
 };
 
 export function createSyncRunService() {
-  return new SyncRunService(new SyncRunRepository(), tm);
+  return new SyncRunService(new SyncRunRepository(), tm, appConfig);
 }
 
 const hubspotThrottler = new Throttler();

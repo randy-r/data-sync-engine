@@ -1,19 +1,20 @@
 import { SyncRun } from '../data/domain.types';
 import { ISyncRunRepository } from '../data/repository.types';
 import { ITransactionManager } from '../data/TransactionManager';
-
-// const SYNC_ALLOWED_INTERVAL_MS = 60 * 60 * 1000;
-const SYNC_ALLOWED_INTERVAL_MS = 5_000;
+import { AppConfig } from './service.types';
 
 export class SyncRunService {
-  syncRunRepo: ISyncRunRepository;
-  tm: ITransactionManager;
+  private syncRunRepo: ISyncRunRepository;
+  private tm: ITransactionManager;
+  private config: AppConfig;
   constructor(
     syncRunRepo: ISyncRunRepository,
-    transactionManager: ITransactionManager
+    transactionManager: ITransactionManager,
+    config: AppConfig
   ) {
     this.syncRunRepo = syncRunRepo;
     this.tm = transactionManager;
+    this.config = config;
   }
   async createIfFinished(): Promise<{ isNew: boolean; syncRun: SyncRun }> {
     const { isNew, syncRun } = await this.tm.runAsTransaction(async (trx) => {
@@ -28,7 +29,10 @@ export class SyncRunService {
         const finished = new Date(r.finished_at);
         const now = new Date();
 
-        if (now.getTime() - finished.getTime() > SYNC_ALLOWED_INTERVAL_MS) {
+        if (
+          now.getTime() - finished.getTime() >
+          this.config.syncAllowedIntervalMs
+        ) {
           isNew = true;
           r = await this.syncRunRepo.create({ trx });
         }
