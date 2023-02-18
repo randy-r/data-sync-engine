@@ -11,18 +11,18 @@ import {
 } from '../data/repository.types';
 import { ITransactionManager } from '../data/TransactionManager';
 import { mapStripeResponseToDomainCustomer } from './mappers';
-
-export type TransferServiceConfig = {
-  stripeChunkSize: number;
-};
+import { AppConfig, IAccountTransferService } from './service.types';
 
 export class TransferService {
   private syncRunRepo: ISyncRunUpdateRepository;
   private tm: ITransactionManager;
-  private stripeRepo: IStripeRepository;
   private userAccountsRepo: IUserAccountsRepository;
-  private config: TransferServiceConfig;
+  private config: AppConfig;
+
   private customersDbRepo: ICustomersDbRepository;
+  private stripeRepo: IStripeRepository;
+
+  private hubspotTransferService: IAccountTransferService;
 
   constructor(
     syncRunRepo: ISyncRunUpdateRepository,
@@ -30,7 +30,8 @@ export class TransferService {
     stripeRepo: IStripeRepository,
     userAccountsRepo: IUserAccountsRepository,
     customersDbRepo: ICustomersDbRepository,
-    config: TransferServiceConfig
+    hubspotTransferService: IAccountTransferService,
+    config: AppConfig
   ) {
     this.syncRunRepo = syncRunRepo;
     this.stripeRepo = stripeRepo;
@@ -38,6 +39,7 @@ export class TransferService {
     this.userAccountsRepo = userAccountsRepo;
     this.config = config;
     this.customersDbRepo = customersDbRepo;
+    this.hubspotTransferService = hubspotTransferService;
   }
   async transfer(syncRun: SyncRun): Promise<void> {
     try {
@@ -80,6 +82,15 @@ export class TransferService {
                   starting_after = data.at(-1).id;
                 }
               });
+              break;
+            }
+            case 'hubspot': {
+              await this.hubspotTransferService.transfer(
+                account_id,
+                value.access_token,
+                syncRun.id
+              );
+              break;
             }
 
             default:

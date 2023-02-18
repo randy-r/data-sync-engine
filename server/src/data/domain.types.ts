@@ -28,7 +28,7 @@ export type UserAccountValue = {
 
 export type UserAccountMap = Map<string, UserAccountValue>;
 
-// Projection of StripeCustomer
+// Projection of a Stripe Customer
 export type StripeCustomer = {
   id: string;
   name?: string;
@@ -39,9 +39,30 @@ export type StripeCustomer = {
 
 export type StripeDbCustomer = {
   id: string;
+  email?: string;
   name?: string;
   description?: string;
-  email?: string;
+  account_id: string;
+  created_at: string;
+  sync_run_id: number;
+};
+
+// Projection of a Hubspot Contact
+export type HubspotContact = {
+  id: string;
+  properties: {
+    email: string;
+    firstname?: string;
+    lastname?: string;
+    createdate: string;
+  };
+};
+
+export type HubspotDbContact = {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
   account_id: string;
   created_at: string;
   sync_run_id: number;

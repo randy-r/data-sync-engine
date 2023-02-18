@@ -26,7 +26,7 @@ app.post('/api/sync', async (req, res, next) => {
 });
 
 app.listen(port, () => {
-  return console.log(`Express is listening at http://localhost:${port}`);
+  return console.info(`Express is listening at http://localhost:${port}`);
 });
 
 app.use((err: { message: string }, req, res: Response, next) => {

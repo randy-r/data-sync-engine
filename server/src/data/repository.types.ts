@@ -1,6 +1,13 @@
-import { StripeDbCustomer, SyncRun, UserAccountMap } from './domain.types';
+import {
+  HubspotContact,
+  HubspotDbContact,
+  StripeCustomer,
+  StripeDbCustomer,
+  SyncRun,
+  UserAccountMap,
+} from './domain.types';
 import type { Knex } from 'knex';
-import Stripe from 'stripe';
+import { ForwardPaging } from '@hubspot/api-client/lib/codegen/crm/objects/';
 
 export interface ISyncRunRepository {
   create(arg0: { trx: Knex.Transaction<any, any[]> }): Promise<SyncRun>;
@@ -36,4 +43,24 @@ export interface ICustomersDbRepository {
     toInsert: StripeDbCustomer[],
     arg3: { trx: Knex.Transaction<any, any[]> }
   ): Promise<StripeDbCustomer[]>;
+}
+
+export interface IHubspotRepository {
+  getContacts(
+    access_token: string,
+    params?: { limit?: number; starting_after?: string }
+  ): Promise<{ results: HubspotContact[]; paging?: ForwardPaging }>;
+}
+
+export interface IContactsDbRepository {
+  clearContactsForAccount(
+    account_id: string,
+    arg1: { trx: Knex.Transaction<any, any[]> }
+  ): Promise<{ count: number }>;
+  insertContactsForAccount(
+    account_id: string,
+    sync_run_id: number,
+    toInsert: HubspotDbContact[],
+    arg3: { trx: Knex.Transaction<any, any[]> }
+  ): Promise<HubspotDbContact[]>;
 }

@@ -13,6 +13,10 @@ import { SyncTriggerService } from './SyncTriggerService';
 import { StripeRepository } from '../data/StripeRepository';
 import { UserAccountsRepository } from '../data/UserAccountsRepository';
 import { CustomersDbRepository } from '../data/CustomersDbRepository';
+import { HubspotTransferService } from './HubspotTransferService';
+import { HubspotRepository } from '../data/HubspotRepository';
+import { AppConfig } from './service.types';
+import { ContactsDbRepository } from '../data/ContactsDbRepository';
 dotenv.config();
 
 const knex = knexInit({
@@ -24,24 +28,31 @@ const knex = knexInit({
   },
 });
 
+const tm = new TransactionManager(knex);
+
+const appConfig: AppConfig = {
+  stripeChunkSize: Number.parseInt(process.env.STRIPE_CHUNK_SIZE, 10) ?? 10,
+  hubspotChunkSize: Number.parseInt(process.env.HUBSPOT_CHUNK_SIZE, 10) ?? 10,
+};
+
 export function createSyncRunService() {
-  return new SyncRunService(
-    new SyncRunRepository(),
-    new TransactionManager(knex)
-  );
+  return new SyncRunService(new SyncRunRepository(), tm);
 }
 
 export function createTransferService() {
   return new TransferService(
     new SyncRunRepository(),
-    new TransactionManager(knex),
+    tm,
     new StripeRepository(),
     new UserAccountsRepository(),
     new CustomersDbRepository(),
-    {
-      stripeChunkSize:
-        Number.parseInt(process.env.STRIPE_CHUNK_SIZE, 10) ?? 10,
-    }
+    new HubspotTransferService(
+      new HubspotRepository(),
+      new ContactsDbRepository(),
+      tm,
+      appConfig
+    ),
+    appConfig
   );
 }
 
