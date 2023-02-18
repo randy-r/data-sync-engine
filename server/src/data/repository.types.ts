@@ -45,11 +45,23 @@ export interface ICustomersDbRepository {
   ): Promise<StripeDbCustomer[]>;
 }
 
+export type HubspotRateLimit = {
+  max: number;
+  remaining: number;
+  intervalMs: number;
+};
+
+export type GetHubspotContactsResponse = {
+  results: HubspotContact[];
+  paging?: ForwardPaging;
+  rateLimit: HubspotRateLimit;
+};
+
 export interface IHubspotRepository {
   getContacts(
     access_token: string,
     params?: { limit?: number; starting_after?: string }
-  ): Promise<{ results: HubspotContact[]; paging?: ForwardPaging }>;
+  ): Promise<GetHubspotContactsResponse>;
 }
 
 export interface IContactsDbRepository {

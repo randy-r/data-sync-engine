@@ -5,22 +5,26 @@ import {
 import { ITransactionManager } from '../data/TransactionManager';
 import { mapHubspotResponseToDomainContact } from './mappers';
 import { AppConfig, IAccountTransferService } from './service.types';
+import { Throttler } from './Throttler';
 
 export class HubspotTransferService implements IAccountTransferService {
   private hubspotRepo: IHubspotRepository;
   private contactsDbRepo: IContactsDbRepository;
   private config: AppConfig;
   private tm: ITransactionManager;
+  private hubspotThrottler: Throttler;
   constructor(
     hubspotRepo: IHubspotRepository,
     contactsDbRepo: IContactsDbRepository,
     tm: ITransactionManager,
+    hubspotThrottler: Throttler,
     config: AppConfig
   ) {
     this.hubspotRepo = hubspotRepo;
     this.contactsDbRepo = contactsDbRepo;
     this.config = config;
     this.tm = tm;
+    this.hubspotThrottler = hubspotThrottler;
   }
   async transfer(
     account_id: string,
@@ -36,12 +40,25 @@ export class HubspotTransferService implements IAccountTransferService {
 
       // note: starting after is inclusive
       while (hasMore) {
-        const contactsResponse = await this.hubspotRepo.getContacts(
-          access_token,
-          {
-            limit: this.config.hubspotChunkSize,
-            starting_after,
-          }
+        // let k = 30;
+        // const promises = Array.from({ length: k }).map((_) => {
+        //   return this.hubspotThrottler.throttleIfNeeded(() => {
+        //     console.log({ k: --k });
+        //     return this.hubspotRepo.getContacts(access_token, {
+        //       limit: this.config.hubspotChunkSize,
+        //       starting_after,
+        //     });
+        //   });
+        // });
+
+        // await Promise.all(promises);
+
+        const contactsResponse = await this.hubspotThrottler.throttleIfNeeded(
+          () =>
+            this.hubspotRepo.getContacts(access_token, {
+              limit: this.config.hubspotChunkSize,
+              starting_after,
+            })
         );
         hasMore = !!contactsResponse.paging?.next;
         starting_after = contactsResponse.paging?.next?.after;

@@ -1,0 +1,35 @@
+{
+  code: 429,
+  body: {
+    status: 'error',
+    message: 'You have reached your ten_secondly_rolling limit.',
+    errorType: 'RATE_LIMIT',
+    correlationId: 'e9a21e1c-b534-4975-b50b-2465cb019983',
+    policyName: 'TEN_SECONDLY_ROLLING',
+    groupName: 'publicapi:private_app-api-calls-ten-secondly:1451032:26985318'
+  },
+  headers: {
+    'access-control-allow-credentials': 'false',
+    'alt-svc': 'h3=":443"; ma=86400, h3-29=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '79b7a6866e21053c-OTP',
+    connection: 'close',
+    'content-length': '272',
+    'content-type': 'application/json;charset=utf-8',
+    date: 'Sat, 18 Feb 2023 15:03:36 GMT',
+    nel: '{"success_fraction":0.01,"report_to":"cf-nel","max_age":604800}',
+    'report-to': '{"endpoints":[{"url":"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=YEQd%2F3SNFLs10sH6K6NANjOyVLEWb1mbRIabgJGH1xCApBT9ID4IR826TyYNQ0rMNG33pE5V9oy9F%2FT83VeHnpOPHSKBeS4DTwwXX%2BKwiUiAHl1HaIkMyS6HDPyFzOqZ"}],"group":"cf-nel","max_age":604800}',
+    server: 'cloudflare',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'origin, Accept-Encoding',
+    'x-hubspot-correlation-id': 'e9a21e1c-b534-4975-b50b-2465cb019983',
+    'x-hubspot-ratelimit-daily': '250000',
+    'x-hubspot-ratelimit-daily-remaining': '249324',
+    'x-hubspot-ratelimit-interval-milliseconds': '10000',
+    'x-hubspot-ratelimit-max': '100',
+    'x-hubspot-ratelimit-remaining': '0',
+    'x-hubspot-ratelimit-secondly': '10',
+    'x-hubspot-ratelimit-secondly-remaining': '0',
+    'x-trace': '2BACB5FACF60350150ABC7452DDC40999CC978FC8A000000000000000000'
+  }
+}

@@ -18,6 +18,7 @@ import { HubspotRepository } from '../data/HubspotRepository';
 import { AppConfig } from './service.types';
 import { ContactsDbRepository } from '../data/ContactsDbRepository';
 import { CleanUpService } from './CleanUpService';
+import { Throttler } from './Throttler';
 dotenv.config();
 
 const knex = knexInit({
@@ -40,6 +41,8 @@ export function createSyncRunService() {
   return new SyncRunService(new SyncRunRepository(), tm);
 }
 
+const hubspotThrottler = new Throttler();
+
 export function createTransferService() {
   return new TransferService(
     new SyncRunRepository(),
@@ -51,6 +54,7 @@ export function createTransferService() {
       new HubspotRepository(),
       new ContactsDbRepository(),
       tm,
+      hubspotThrottler,
       appConfig
     ),
     appConfig

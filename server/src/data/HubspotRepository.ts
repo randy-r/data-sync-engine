@@ -1,21 +1,54 @@
-import { HubspotContact, StripeDbCustomer } from './domain.types';
-import { IHubspotRepository } from './repository.types';
-import * as hubspot from '@hubspot/api-client';
-import {  ForwardPaging } from '@hubspot/api-client/lib/codegen/crm/objects/';
+import {
+  GetHubspotContactsResponse,
+  IHubspotRepository,
+} from './repository.types';
+import fetch from 'cross-fetch';
 
 export class HubspotRepository implements IHubspotRepository {
   async getContacts(
     access_token: string,
     params?: { limit?: number; starting_after?: string }
-  ): Promise<{ results: HubspotContact[]; paging?: ForwardPaging }> {
-    const client = new hubspot.Client({ accessToken: access_token });
-    const resp = await client.crm.contacts.basicApi.getPage(
-      params.limit,
-      params.starting_after
+  ): Promise<GetHubspotContactsResponse> {
+    const afterQs = params.starting_after
+      ? `&after=${params.starting_after}`
+      : '';
+    const fetchResponse = await fetch(
+      `https://api.hubapi.com/crm/v4/objects/contacts?limit=${params.limit}${afterQs}`,
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          'Content-Type': 'application/json',
+        },
+      }
     );
-    
-    // TODO better TS, the actual objects fit but the hubspot properties field is of type Record<string,...>
-    // @ts-ignore
-    return resp;
+    if (fetchResponse.ok) {
+      const parsedResponse = (await fetchResponse.json()) as Omit<
+        GetHubspotContactsResponse,
+        'rateLimit'
+      >;
+
+      const headers = fetchResponse.headers;
+
+      return {
+        ...parsedResponse,
+        rateLimit: {
+          max: Number.parseInt(headers.get('x-hubspot-ratelimit-max'), 10),
+          remaining: Number.parseInt(
+            headers.get('x-hubspot-ratelimit-remaining')
+          ),
+          intervalMs: Number.parseInt(
+            headers.get('x-hubspot-ratelimit-interval-milliseconds'),
+            10
+          ),
+        },
+      };
+    } else {
+      // TODO specialized errors
+      const body = await fetchResponse.json();
+      console.error(body);
+      throw new Error(
+        `Hubspot response was unsuccessful, https status code: ${fetchResponse.status}.`
+      );
+    }
   }
 }
