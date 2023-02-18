@@ -32,14 +32,15 @@ export class HubspotTransferService implements IAccountTransferService {
     sync_run_id: number
   ): Promise<void> {
     await this.tm.runAsTransaction(async (trx) => {
+      // note: starting after is inclusive
       let starting_after: string | undefined;
       let hasMore = true;
       await this.contactsDbRepo.clearContactsForAccount(account_id, {
         trx,
       });
 
-      // note: starting after is inclusive
       while (hasMore) {
+        // Note: Uncomment these lines to showcase the rate limiting mechanism
         // let k = 30;
         // const promises = Array.from({ length: k }).map((_) => {
         //   return this.hubspotThrottler.throttleIfNeeded(() => {
@@ -50,7 +51,6 @@ export class HubspotTransferService implements IAccountTransferService {
         //     });
         //   });
         // });
-
         // await Promise.all(promises);
 
         const contactsResponse = await this.hubspotThrottler.throttleIfNeeded(
