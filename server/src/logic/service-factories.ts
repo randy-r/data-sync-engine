@@ -17,6 +17,7 @@ import { HubspotTransferService } from './HubspotTransferService';
 import { HubspotRepository } from '../data/HubspotRepository';
 import { AppConfig } from './service.types';
 import { ContactsDbRepository } from '../data/ContactsDbRepository';
+import { CleanUpService } from './CleanUpService';
 dotenv.config();
 
 const knex = knexInit({
@@ -61,4 +62,8 @@ export function createTriggerService() {
     createSyncRunService(),
     createTransferService()
   );
+}
+
+export function createCleanUpService() {
+  return new CleanUpService(tm);
 }

@@ -1,12 +1,16 @@
 import express, { NextFunction, Response } from 'express';
 import dotenv from 'dotenv';
 import {
+  createCleanUpService,
   createTriggerService,
 } from './logic/service-factories';
 dotenv.config();
 
 const app = express();
 const port = 3007;
+
+const cleanUpService = createCleanUpService();
+const cleanUpPromise = cleanUpService.cleanUpHangingSyncRuns();
 
 async function tryOrNext<R>(func: () => Promise<R>, next: NextFunction) {
   try {
@@ -19,6 +23,9 @@ async function tryOrNext<R>(func: () => Promise<R>, next: NextFunction) {
 
 app.post('/api/sync', async (req, res, next) => {
   await tryOrNext(async () => {
+    // make sure clean was done at start time
+    await cleanUpPromise;
+
     const s = createTriggerService();
     const syncRun = await s.triggerSync();
     res.json(syncRun);
